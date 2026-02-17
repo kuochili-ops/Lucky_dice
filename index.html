@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬年開運紅骰子</title>
+    <style>
+        :root {
+            --dice-red: #b30000;      /* 深紅色底 */
+            --pink-white: #fff0f5;    /* 粉白色字 */
+            --bg-color: #fdf2f2;
+            --dice-size: 150px;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--bg-color);
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            overflow: hidden;
+        }
+
+        h1 { 
+            color: var(--dice-red); 
+            margin-bottom: 40px; 
+            letter-spacing: 2px;
+        }
+
+        /* 3D 舞台 */
+        .scene {
+            width: var(--dice-size);
+            height: var(--dice-size);
+            perspective: 1200px;
+            cursor: pointer;
+        }
+
+        /* 骰子本體 */
+        .dice {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* 骰子面樣式：紅底粉白字 */
+        .dice__face {
+            position: absolute;
+            width: var(--dice-size);
+            height: var(--dice-size);
+            background: radial-gradient(circle, #d32f2f, var(--dice-red));
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--pink-white); /* 粉白色字體 */
+            text-align: center;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.2);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+            backface-visibility: visible;
+        }
+
+        /* 3D 定位 */
+        .dice__face--1 { transform: rotateY(0deg) translateZ(75px); }
+        .dice__face--2 { transform: rotateY(90deg) translateZ(75px); }
+        .dice__face--3 { transform: rotateY(180deg) translateZ(75px); }
+        .dice__face--4 { transform: rotateY(-90deg) translateZ(75px); }
+        .dice__face--5 { transform: rotateX(90deg) translateZ(75px); }
+        .dice__face--6 { transform: rotateX(-90deg) translateZ(75px); }
+
+        .hint {
+            margin-top: 60px;
+            color: #b38888;
+            font-size: 0.95rem;
+            padding: 5px 15px;
+            border: 1px dashed #b38888;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🐎 2026 馬到成功</h1>
+
+    <div class="scene" onclick="rollDice()">
+        <div class="dice" id="dice">
+            <div class="dice__face dice__face--1">龍馬<br>精神</div>
+            <div class="dice__face dice__face--2">一馬<br>當先</div>
+            <div class="dice__face dice__face--3">福馬<br>迎春</div>
+            <div class="dice__face dice__face--4">萬馬<br>奔騰</div>
+            <div class="dice__face dice__face--5">馬到<br>成功</div>
+            <div class="dice__face dice__face--6">前程<br>似錦</div>
+        </div>
+    </div>
+
+    <p class="hint">點擊骰子滾動好運</p>
+
+    <script>
+        let currentRotation = { x: 0, y: 0 };
+
+        function rollDice() {
+            const dice = document.getElementById('dice');
+            
+            // 隨機增加 4-8 圈 (90度 * 4-8)
+            const randomX = (Math.floor(Math.random() * 5) + 4) * 90; 
+            const randomY = (Math.floor(Math.random() * 5) + 4) * 90;
+            
+            currentRotation.x += randomX;
+            currentRotation.y += randomY;
+
+            dice.style.transform = `rotateX(${currentRotation.x}deg) rotateY(${currentRotation.y}deg)`;
+        }
+
+        // 開啟 App 時自動滾動 2 秒
+        window.onload = () => {
+            setTimeout(rollDice, 100);
+        };
+    </script>
+</body>
+</html>
