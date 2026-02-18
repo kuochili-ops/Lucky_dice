@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>馬年成語賀詞方塊</title>
+    <title>馬年成語消除 - L型全面修復版</title>
     <style>
         :root { --red: #d32f2f; --gold: #ffd700; }
         body {
@@ -93,10 +93,10 @@
     document.getElementById('display-idioms').innerHTML = idioms.map(i => `<div>${i}</div>`).join('');
 
     const pieceTemplates = [
-        [{x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}], // 橫條
-        [{x: 0, y: -1}, {x: 0, y: 0}, {x: 1, y: 0}], // L型
-        [{x: 0, y: -1}, {x: 0, y: 0}, {x: -1, y: 0}], // 反L
-        [{x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}]  // 直條
+        [{x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}],
+        [{x: 0, y: -1}, {x: 0, y: 0}, {x: 1, y: 0}],
+        [{x: 0, y: -1}, {x: 0, y: 0}, {x: -1, y: 0}],
+        [{x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}]
     ];
 
     function startGame() {
@@ -200,21 +200,25 @@
                     let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
 
-                // 2. 正向/倒向 L型全掃描
-                const L_shapes = [
-                    // 垂直3+橫1 (截圖型)
-                    [{y:0,x:0}, {y:1,x:0}, {y:2,x:0}, {y:2,x:1}],
-                    // 橫3+垂1 (倒L)
-                    [{y:0,x:0}, {y:0,x:1}, {y:0,x:2}, {y:1,x:2}],
-                    // 反L型
-                    [{y:0,x:1}, {y:1,x:1}, {y:2,x:1}, {y:2,x:0}]
+                // 2. 強化版 L型偵測 (包含您提到的 1 / 234)
+                const L_paths = [
+                    // 垂直 L (垂直3 + 底部向右1)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}],
+                    // 垂直 反L (垂直3 + 底部向左1)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:-1}],
+                    // 橫向 倒L (您提到的型態：上方1 + 下方橫向3)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}],
+                    // 橫向 倒L 反向 (上方1 + 下方橫向向左3)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:-1}, {dy:1,dx:-2}],
+                    // 橫向 L (上方橫向3 + 結尾向下1)
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:0,dx:2}, {dy:1,dx:2}]
                 ];
 
-                L_shapes.forEach(shape => {
+                L_paths.forEach(path => {
                     let word = "", coords = [];
-                    for(let p of shape) {
-                        let ny = y + p.y, nx = x + p.x;
-                        if(ny < activeRows && nx < cols && board[ny][nx]) {
+                    for(let offset of path) {
+                        let ny = y + offset.dy, nx = x + offset.dx;
+                        if(ny >= 0 && ny < activeRows && nx >= 0 && nx < cols && board[ny][nx]) {
                             word += board[ny][nx]; coords.push({y: ny, x: nx});
                         }
                     }
@@ -269,7 +273,7 @@
 
     function showGameOver() {
         document.getElementById('msg').style.display = 'block';
-        document.getElementById('final-list').innerHTML = `恭賀新禧：<br><b style="color:var(--gold)">${completedIdioms.join('、') || '再接再厲'}</b>`;
+        document.getElementById('final-list').innerHTML = `恭賀馬年：<br><b style="color:var(--gold)">${completedIdioms.join('、') || '再接再厲'}</b>`;
     }
 
     let lastTime = 0, dropCounter = 0;
