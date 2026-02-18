@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>馬年成語消除 - L型全面修復版</title>
+    <title>馬年成語消除 - 方塊全邏輯版</title>
     <style>
         :root { --red: #d32f2f; --gold: #ffd700; }
         body {
@@ -200,30 +200,37 @@
                     let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
 
-                // 2. 強化版 L型偵測 (包含您提到的 1 / 234)
+                // 2. L型偵測
                 const L_paths = [
-                    // 垂直 L (垂直3 + 底部向右1)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}],
-                    // 垂直 反L (垂直3 + 底部向左1)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:-1}],
-                    // 橫向 倒L (您提到的型態：上方1 + 下方橫向3)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}],
-                    // 橫向 倒L 反向 (上方1 + 下方橫向向左3)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:-1}, {dy:1,dx:-2}],
-                    // 橫向 L (上方橫向3 + 結尾向下1)
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:0,dx:2}, {dy:1,dx:2}]
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}], // 垂直L
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}], // 橫向倒L
                 ];
-
                 L_paths.forEach(path => {
                     let word = "", coords = [];
-                    for(let offset of path) {
-                        let ny = y + offset.dy, nx = x + offset.dx;
+                    for(let o of path) {
+                        let ny = y + o.dy, nx = x + o.dx;
                         if(ny >= 0 && ny < activeRows && nx >= 0 && nx < cols && board[ny][nx]) {
                             word += board[ny][nx]; coords.push({y: ny, x: nx});
                         }
                     }
-                    let res = isIdiom(word);
-                    if (res) matches.push({word: res, coords});
+                    let res = isIdiom(word); if (res) matches.push({word: res, coords});
+                });
+
+                // 3. 正方形/類正方形偵測 (2x2)
+                // 順時針或逆時針路徑: (x,y) -> (x+1,y) -> (x+1,y+1) -> (x,y+1)
+                const Square_paths = [
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}], // 繞一圈 (1 2 / 4 3)
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:0}, {dy:1,dx:1}]  // Z字型 (1 2 / 3 4)
+                ];
+                Square_paths.forEach(path => {
+                    let word = "", coords = [];
+                    for(let o of path) {
+                        let ny = y + o.dy, nx = x + o.dx;
+                        if(ny >= 0 && ny < activeRows && nx >= 0 && nx < cols && board[ny][nx]) {
+                            word += board[ny][nx]; coords.push({y: ny, x: nx});
+                        }
+                    }
+                    let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
             }
         }
@@ -273,7 +280,7 @@
 
     function showGameOver() {
         document.getElementById('msg').style.display = 'block';
-        document.getElementById('final-list').innerHTML = `恭賀馬年：<br><b style="color:var(--gold)">${completedIdioms.join('、') || '再接再厲'}</b>`;
+        document.getElementById('final-list').innerHTML = `恭祝馬年：<br><b style="color:var(--gold)">${completedIdioms.join('、') || '再接再厲'}</b>`;
     }
 
     let lastTime = 0, dropCounter = 0;
