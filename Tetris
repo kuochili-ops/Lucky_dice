@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>馬年成語全方位消除 - 福犬版</title>
+    <style>
+        :root { --red: #d32f2f; --gold: #ffd700; }
+        body {
+            background-color: #1a1a1a; color: white;
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0; overflow: hidden; touch-action: none;
+        }
+        /* 開場畫面：加入狗狗圖片 */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #8b0000 0%, #1a1a1a 100%);
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 200; text-align: center; padding: 20px; box-sizing: border-box;
+        }
+        .dog-img {
+            width: 180px; height: 180px; border-radius: 50%;
+            border: 4px solid var(--gold); margin-bottom: 15px;
+            object-fit: cover; box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+        .idiom-list {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+            margin: 15px 0; color: var(--gold); font-size: 18px; font-weight: bold;
+        }
+        .start-btn {
+            padding: 12px 35px; font-size: 22px; background: var(--gold);
+            color: #8b0000; border: none; border-radius: 50px;
+            cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        /* 遊戲畫面 */
+        #game-container { position: relative; margin-top: 10px; border: 4px solid var(--gold); display: none; }
+        canvas { display: block; background-color: #2a2a2a; }
+        .stats { width: 300px; padding: 5px; text-align: center; }
+        .controls { margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 300px; }
+        .ctrl-btn { padding: 12px; font-size: 18px; background: var(--red); color: white; border: 1px solid var(--gold); border-radius: 8px; }
+        #msg {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(139, 0, 0, 0.95); padding: 20px; text-align: center;
+            display: none; width: 80%; border: 3px double var(--gold); z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <img src="https://i.imgur.com/vHqL6Hj.png" class="dog-img" alt="福犬">
+        <h1 style="color: var(--gold); margin: 0;">2026 龍馬精神</h1>
+        <p style="font-size: 18px; margin: 10px 0;">祝各位馬年集滿賀詞：</p>
+        <div class="idiom-list" id="display-idioms"></div>
+        <button class="start-btn" onclick="startGame()">開始遊戲</button>
+    </div>
+
+    <div class="stats" id="ui-stats" style="display:none">
+        <h3 style="color: var(--gold); margin: 5px 0;">已收集賀詞: <span id="score">0</span></h3>
+    </div>
+
+    <div id="game-container">
+        <canvas id="tetris" width="300" height="450"></canvas>
+        <div id="msg">
+            <h2 id="msg-title">福馬報喜</h2>
+            <p id="final-list"></p>
+            <button class="ctrl-btn" onclick="location.reload()">再玩一次</button>
+        </div>
+    </div>
+
+    <div class="controls" id="ui-controls" style="display:none">
+        <button class="ctrl-btn" onclick="move(-1)">←</button>
+        <button class="ctrl-btn" onclick="rotate()">旋轉</button>
+        <button class="ctrl-btn" onclick="move(1)">→</button>
+        <button class="ctrl-btn" style="grid-column: span 3;" onclick="drop()">加速 ↓</button>
+    </div>
+
+<script>
+    const canvas = document.getElementById('tetris');
+    const context = canvas.getContext('2d');
+    const grid = 30;
+    const cols = 10;
+    const rows = 15;
+    const idioms = ["龍馬精神", "馬到成功", "一馬當先", "萬馬奔騰", "福馬迎春", "前程似錦"];
+
+    let board = Array.from({length: rows}, () => Array(cols).fill(0));
+    let completedIdioms = [];
+    let lockedRows = 0;
+    let isGameOver = false;
+    let gameRunning = false;
+    let flashingBlocks = [];
+    let player = { pos: {x: 5, y: 1}, blocks: [] };
+
+    document.getElementById('display-idioms').innerHTML = idioms.map(i => `<div>${i}</div>`).join('');
+
+    const pieceTemplates = [
+        [{x: -1, y: 0}, {x: 0, y: 0}, {x: 1, y: 0}], // 橫
+        [{x: 0, y: -1}, {x: 0, y: 0}, {x: 1, y: 0}], // L
+        [{x: 0, y: -1}, {x: 0, y: 0}, {x: -1, y: 0}], // 反L
+        [{x: 0, y: -1}, {x: 0, y: 0}, {x: 0, y: 1}]  // 直
+    ];
+
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-container').style.display = 'block';
+        document.getElementById('ui-stats').style.display = 'block';
+        document.getElementById('ui-controls').style.display = 'grid';
+        gameRunning = true;
+        createPiece();
+        update();
+    }
+
+    function createPiece() {
+        const targetIdiom = idioms[Math.floor(Math.random() * idioms.length)];
+        const selectedChars = [...targetIdiom.split('')].sort(() => Math.random() - 0.5).slice(0, 3);
+        const template = pieceTemplates[Math.floor(Math.random() * pieceTemplates.length)];
+        player.blocks = template.map((coord, i) => ({ x: coord.x, y: coord.y, char: selectedChars[i] }));
+        player.pos = { x: 4, y: 1 };
+        if (checkCollision(0, 0, player.blocks)) { isGameOver = true; showGameOver(); }
+    }
+
+    function rotate() {
+        if(isGameOver || flashingBlocks.length) return;
+        const newBlocks = player.blocks.map(b => ({ x: -b.y, y: b.x, char: b.char }));
+        if (!checkCollision(0, 0, newBlocks)) { player.blocks = newBlocks; }
+        else if (!checkCollision(-1, 0, newBlocks)) { player.pos.x -= 1; player.blocks = newBlocks; }
+        else if (!checkCollision(1, 0, newBlocks)) { player.pos.x += 1; player.blocks = newBlocks; }
+        draw();
+    }
+
+    function checkCollision(dx, dy, blocks) {
+        for (let b of blocks) {
+            let nx = player.pos.x + b.x + dx;
+            let ny = player.pos.y + b.y + dy;
+            if (nx < 0 || nx >= cols || ny >= rows - lockedRows || (ny >= 0 && board[ny][nx] !== 0)) return true;
+        }
+        return false;
+    }
+
+    function move(dir) { if (!isGameOver && !flashingBlocks.length && !checkCollision(dir, 0, player.blocks)) { player.pos.x += dir; draw(); } }
+
+    function drop() {
+        if (isGameOver || flashingBlocks.length) return;
+        if (!checkCollision(0, 1, player.blocks)) { player.pos.y++; }
+        else { merge(); processElimination(); }
+        draw();
+    }
+
+    function merge() {
+        player.blocks.forEach(b => {
+            let ny = player.pos.y + b.y; let nx = player.pos.x + b.x;
+            if (ny >= 0) board[ny][nx] = b.char;
+        });
+    }
+
+    async function processElimination() {
+        while (true) {
+            let matches = findComplexMatches();
+            if (matches.length === 0) break;
+            flashingBlocks = matches.flatMap(m => m.coords);
+            await new Promise(r => setTimeout(r, 600));
+            matches.forEach(m => {
+                m.coords.forEach(c => board[c.y][c.x] = 0);
+                if (!completedIdioms.includes(m.word)) completedIdioms.push(m.word);
+                lockedRows++;
+                const lockY = rows - lockedRows;
+                for(let i=0; i<cols; i++) board[lockY][i] = (i < 4) ? m.word[i] : "🧧";
+            });
+            flashingBlocks = [];
+            document.getElementById('score').innerText = completedIdioms.length;
+            applyGravity();
+            await new Promise(r => setTimeout(r, 100));
+        }
+        createPiece();
+    }
+
+    function findComplexMatches() {
+        let matches = [];
+        const activeRows = rows - lockedRows;
+        const isIdiom = (str) => {
+            if (str.length !== 4) return null;
+            if (idioms.includes(str)) return str;
+            let rev = str.split('').reverse().join('');
+            if (idioms.includes(rev)) return rev;
+            return null;
+        };
+
+        for (let y = 0; y < activeRows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (!board[y][x]) continue;
+
+                // 1. 直線
+                [[0,1], [1,0], [1,1], [1,-1]].forEach(([dy, dx]) => {
+                    let word = "", coords = [];
+                    for(let i=0; i<4; i++) {
+                        let ny = y+dy*i, nx = x+dx*i;
+                        if(ny>=0 && ny<activeRows && nx>=0 && nx<cols && board[ny][nx]) {
+                            word += board[ny][nx]; coords.push({y: ny, x: nx});
+                        }
+                    }
+                    let res = isIdiom(word); if (res) matches.push({word: res, coords});
+                });
+
+                // 2. L型 (修正版：根據你的截圖，偵測垂直3格+底部橫向1格)
+                if (y+2 < activeRows && x+1 < cols) {
+                    let word = board[y][x] + board[y+1][x] + board[y+2][x] + board[y+2][x+1];
+                    let res = isIdiom(word);
+                    if (res) matches.push({word: res, coords: [{y,x}, {y:y+1,x}, {y:y+2,x}, {y:y+2,x:x+1}]});
+                }
+
+                // 3. 方塊型 (2x2)
+                if (x+1 < cols && y+1 < activeRows) {
+                    let word = board[y][x] + board[y][x+1] + board[y+1][x+1] + board[y+1][x];
+                    let res = isIdiom(word);
+                    if (res) matches.push({word: res, coords: [{y,x}, {y,x:x+1}, {y:y+1,x:x+1}, {y:y+1,x}]});
+                }
+
+                // 4. 梯形 (1-2-1)
+                if (x+1 < cols && y+2 < activeRows) {
+                    let word = board[y][x] + board[y+1][x] + board[y+1][x+1] + board[y+2][x+1];
+                    let res = isIdiom(word);
+                    if (res) matches.push({word: res, coords: [{y,x}, {y:y+1,x}, {y:y+1,x:x+1}, {y:y+2,x:x+1}]});
+                }
+            }
+        }
+        return matches;
+    }
+
+    function applyGravity() {
+        const activeRows = rows - lockedRows;
+        for (let x = 0; x < cols; x++) {
+            for (let y = activeRows - 1; y > 0; y--) {
+                if (!board[y][x]) {
+                    for (let k = y - 1; k >= 0; k--) {
+                        if (board[k][x]) { board[y][x] = board[k][x]; board[k][x] = 0; break; }
+                    }
+                }
+            }
+        }
+    }
+
+    function draw() {
+        context.fillStyle = '#2a2a2a';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        board.forEach((row, y) => {
+            row.forEach((char, x) => {
+                if (char) {
+                    const isLocked = y >= rows - lockedRows;
+                    let color = isLocked ? '#444' : '#b30000';
+                    if (flashingBlocks.some(b => b.x === x && b.y === y) && Math.floor(Date.now() / 150) % 2 === 0) color = '#fff';
+                    drawSquare(x, y, char, color);
+                }
+            });
+        });
+        if (!isGameOver && gameRunning) {
+            player.blocks.forEach(b => { drawSquare(player.pos.x + b.x, player.pos.y + b.y, b.char, '#ff4444'); });
+        }
+    }
+
+    function drawSquare(x, y, txt, color) {
+        if (y < 0) return;
+        context.fillStyle = color;
+        context.fillRect(x * grid + 1, y * grid + 1, grid - 2, grid - 2);
+        context.fillStyle = (color === '#fff') ? '#000' : '#fff';
+        context.font = "bold 18px 'Microsoft JhengHei'";
+        context.textAlign = "center"; context.textBaseline = "middle";
+        context.fillText(txt, x * grid + grid/2, y * grid + grid/2);
+    }
+
+    function showGameOver() {
+        document.getElementById('msg').style.display = 'block';
+        document.getElementById('msg-title').innerText = completedIdioms.length >= 6 ? "大圓滿！" : "再接再厲";
+        document.getElementById('final-list').innerHTML = `已集滿：<br>${completedIdioms.join('、') || '無'}`;
+    }
+
+    let lastTime = 0, dropCounter = 0;
+    function update(time = 0) {
+        if (!gameRunning) return;
+        const dt = time - lastTime; lastTime = time;
+        if (!isGameOver && !flashingBlocks.length) {
+            dropCounter += dt;
+            if (dropCounter > 1000) { drop(); dropCounter = 0; }
+        }
+        draw();
+        requestAnimationFrame(update);
+    }
+</script>
+</body>
+</html>
