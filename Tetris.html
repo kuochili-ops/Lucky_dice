@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>馬年成語消除 - 方塊全邏輯版</title>
+    <title>馬年成語消除 - 終極邏輯版</title>
     <style>
         :root { --red: #d32f2f; --gold: #ffd700; }
         body {
@@ -216,13 +216,18 @@
                     let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
 
-                // 3. 正方形/類正方形偵測 (2x2)
-                // 順時針或逆時針路徑: (x,y) -> (x+1,y) -> (x+1,y+1) -> (x,y+1)
-                const Square_paths = [
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}], // 繞一圈 (1 2 / 4 3)
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:0}, {dy:1,dx:1}]  // Z字型 (1 2 / 3 4)
+                // 3. 2x2 正方形所有讀取路徑 (全掃描)
+                const Square_Logic = [
+                    // Z字路徑: 1 2 / 3 4
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:0}, {dy:1,dx:1}],
+                    // 繞圈路徑 (順/逆): 1 2 / 4 3
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}],
+                    // 您提到的 3 4 / 2 1 路徑 (其實就是繞圈的反向)
+                    [{dy:1,dx:1}, {dy:1,dx:0}, {dy:0,dx:0}, {dy:0,dx:1}],
+                    // 您提到的 2 3 / 1 4 路徑
+                    [{dy:1,dx:0}, {dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}]
                 ];
-                Square_paths.forEach(path => {
+                Square_Logic.forEach(path => {
                     let word = "", coords = [];
                     for(let o of path) {
                         let ny = y + o.dy, nx = x + o.dx;
