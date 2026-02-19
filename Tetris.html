@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>馬年成語消除 - 全邏輯大滿貫</title>
+    <title>馬年成語消除 - 完美全形狀版</title>
     <style>
         :root { --red: #d32f2f; --gold: #ffd700; }
         body {
@@ -200,23 +200,18 @@
                     let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
 
-                // 2. L型與2x2正方形
-                const Shape_Logic = [
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}], // L
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}], // 橫倒L
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}], // 正方繞圈
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:0}, {dy:1,dx:1}], // 正方Z
+                // 2. 複合形狀 (L, J, 正方, 階梯)
+                const Shapes = [
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}],   // L (下折右)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:-1}],  // J (下折左)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}],   // 橫向 J / 倒 L
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:0,dx:2}, {dy:1,dx:2}],   // 橫向 L
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}],   // 正方
+                    [{dy:1,dx:0}, {dy:1,dx:1}, {dy:0,dx:1}, {dy:0,dx:2}],   // 水平階梯
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:2,dx:1}]    // 垂直階梯
                 ];
 
-                // 3. 新增：階梯式 (Zig-zag)
-                const Stair_Logic = [
-                    // 水平階梯 (1 2 /   3 4)
-                    [{dy:1,dx:0}, {dy:1,dx:1}, {dy:0,dx:1}, {dy:0,dx:2}],
-                    // 垂直階梯 (1 / 2 3 /   4)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:2,dx:1}]
-                ];
-
-                [...Shape_Logic, ...Stair_Logic].forEach(path => {
+                Shapes.forEach(path => {
                     let word = "", coords = [];
                     for(let o of path) {
                         let ny = y + o.dy, nx = x + o.dx;
