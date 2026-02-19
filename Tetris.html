@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>馬年成語消除 - 終極邏輯版</title>
+    <title>馬年成語消除 - 全邏輯大滿貫</title>
     <style>
         :root { --red: #d32f2f; --gold: #ffd700; }
         body {
@@ -188,7 +188,7 @@
             for (let x = 0; x < cols; x++) {
                 if (!board[y][x]) continue;
 
-                // 1. 直線 (水平, 垂直, 斜向)
+                // 1. 直線
                 [[0,1], [1,0], [1,1], [1,-1]].forEach(([dy, dx]) => {
                     let word = "", coords = [];
                     for(let i=0; i<4; i++) {
@@ -200,34 +200,23 @@
                     let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
 
-                // 2. L型偵測
-                const L_paths = [
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}], // 垂直L
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}], // 橫向倒L
+                // 2. L型與2x2正方形
+                const Shape_Logic = [
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}], // L
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}], // 橫倒L
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}], // 正方繞圈
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:0}, {dy:1,dx:1}], // 正方Z
                 ];
-                L_paths.forEach(path => {
-                    let word = "", coords = [];
-                    for(let o of path) {
-                        let ny = y + o.dy, nx = x + o.dx;
-                        if(ny >= 0 && ny < activeRows && nx >= 0 && nx < cols && board[ny][nx]) {
-                            word += board[ny][nx]; coords.push({y: ny, x: nx});
-                        }
-                    }
-                    let res = isIdiom(word); if (res) matches.push({word: res, coords});
-                });
 
-                // 3. 2x2 正方形所有讀取路徑 (全掃描)
-                const Square_Logic = [
-                    // Z字路徑: 1 2 / 3 4
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:0}, {dy:1,dx:1}],
-                    // 繞圈路徑 (順/逆): 1 2 / 4 3
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}],
-                    // 您提到的 3 4 / 2 1 路徑 (其實就是繞圈的反向)
-                    [{dy:1,dx:1}, {dy:1,dx:0}, {dy:0,dx:0}, {dy:0,dx:1}],
-                    // 您提到的 2 3 / 1 4 路徑
-                    [{dy:1,dx:0}, {dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}]
+                // 3. 新增：階梯式 (Zig-zag)
+                const Stair_Logic = [
+                    // 水平階梯 (1 2 /   3 4)
+                    [{dy:1,dx:0}, {dy:1,dx:1}, {dy:0,dx:1}, {dy:0,dx:2}],
+                    // 垂直階梯 (1 / 2 3 /   4)
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:2,dx:1}]
                 ];
-                Square_Logic.forEach(path => {
+
+                [...Shape_Logic, ...Stair_Logic].forEach(path => {
                     let word = "", coords = [];
                     for(let o of path) {
                         let ny = y + o.dy, nx = x + o.dx;
