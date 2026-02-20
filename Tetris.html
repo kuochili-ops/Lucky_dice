@@ -3,34 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>馬年成語消除 - 完美全形狀版</title>
+    <title>2026 龍馬精神：馬年春節賀詞大收集</title>
     <style>
-        :root { --red: #d32f2f; --gold: #ffd700; }
+        :root { --red: #d32f2f; --gold: #ffd700; --dark-red: #8b0000; }
         body {
             background-color: #1a1a1a; color: white;
             font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
             display: flex; flex-direction: column; align-items: center;
-            margin: 0; overflow: hidden; touch-action: none;
+            margin: 0; overflow-x: hidden; touch-action: none;
         }
         #start-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #8b0000 0%, #1a1a1a 100%);
+            background: radial-gradient(circle, var(--dark-red) 0%, #1a1a1a 100%);
             display: flex; flex-direction: column; align-items: center;
-            justify-content: center; z-index: 200; text-align: center; padding: 20px; box-sizing: border-box;
+            z-index: 200; text-align: center; padding: 20px; box-sizing: border-box;
+            overflow-y: auto;
         }
         .dog-avatar {
-            width: 200px; height: 200px; border-radius: 50%;
-            border: 5px solid var(--gold); margin-bottom: 20px;
-            object-fit: cover; box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+            width: 120px; height: 120px; border-radius: 50%;
+            border: 3px solid var(--gold); margin: 10px 0;
+            object-fit: cover; box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
         }
+        .guide-box {
+            background: rgba(0, 0, 0, 0.3); border: 1px solid var(--gold);
+            border-radius: 10px; padding: 15px; margin: 10px 0; width: 90%; max-width: 400px;
+            font-size: 14px; text-align: left; line-height: 1.5;
+        }
+        .guide-box h3 { color: var(--gold); margin-top: 0; margin-bottom: 8px; font-size: 16px; text-align: center; }
+        .guide-box ul { margin: 0; padding-left: 20px; }
         .idiom-list {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-            margin: 15px 0; color: var(--gold); font-size: 18px; font-weight: bold;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;
+            margin: 10px 0; color: var(--gold); font-size: 13px; font-weight: bold;
         }
         .start-btn {
-            padding: 15px 45px; font-size: 22px; background: var(--gold);
-            color: #8b0000; border: none; border-radius: 50px;
-            cursor: pointer; font-weight: bold; box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            padding: 12px 40px; font-size: 20px; background: var(--gold);
+            color: var(--dark-red); border: none; border-radius: 50px;
+            cursor: pointer; font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
         }
         #game-container { position: relative; margin-top: 10px; border: 4px solid var(--gold); display: none; }
         canvas { display: block; background-color: #2a2a2a; }
@@ -48,10 +57,22 @@
 
     <div id="start-screen">
         <img src="IMG_6918.jpg" class="dog-avatar" alt="福犬">
-        <h1 style="color: var(--gold); margin: 0; font-size: 28px;">2026 龍馬精神</h1>
-        <p style="font-size: 18px; margin: 10px 0;">祝各位馬年集滿賀詞：</p>
+        <h1 style="color: var(--gold); margin: 5px 0; font-size: 22px;">2026 龍馬精神</h1>
+        <h2 style="color: #fff; margin: 0 0 10px 0; font-size: 18px;">馬年春節賀詞大收集</h2>
+        
+        <div class="guide-box">
+            <h3>📜 消除秘笈</h3>
+            <ul>
+                <li><b>直線：</b>橫、豎、斜（四向皆可）。</li>
+                <li><b>折角：</b>L 型、J 型、倒 L 排列。</li>
+                <li><b>正方：</b>2x2 繞圈或 Z 字型讀取。</li>
+                <li><b>階梯：</b>像樓梯般的之字型排列。</li>
+                <li><b>規則：</b>成語順讀、逆讀皆可消除！</li>
+            </ul>
+        </div>
+
         <div class="idiom-list" id="display-idioms"></div>
-        <button class="start-btn" onclick="startGame()">開始遊戲</button>
+        <button class="start-btn" onclick="startGame()">開始收集</button>
     </div>
 
     <div class="stats" id="ui-stats" style="display:none">
@@ -200,12 +221,12 @@
                     let res = isIdiom(word); if (res) matches.push({word: res, coords});
                 });
 
-                // 2. 複合形狀 (L, J, 正方, 階梯)
+                // 2. 複合形狀
                 const Shapes = [
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}],   // L (下折右)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:-1}],  // J (下折左)
-                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}],   // 橫向 J / 倒 L
-                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:0,dx:2}, {dy:1,dx:2}],   // 橫向 L
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:1}],   // L
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:2,dx:0}, {dy:2,dx:-1}],  // J
+                    [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:1,dx:2}],   // 橫倒 L
+                    [{dy:0,dx:0}, {dy:0,dx:1}, {dy:0,dx:2}, {dy:1,dx:2}],   // 橫 L
                     [{dy:0,dx:0}, {dy:0,dx:1}, {dy:1,dx:1}, {dy:1,dx:0}],   // 正方
                     [{dy:1,dx:0}, {dy:1,dx:1}, {dy:0,dx:1}, {dy:0,dx:2}],   // 水平階梯
                     [{dy:0,dx:0}, {dy:1,dx:0}, {dy:1,dx:1}, {dy:2,dx:1}]    // 垂直階梯
